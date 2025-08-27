@@ -199,7 +199,7 @@ while run:
             score += 1
             if score % 4 == 0 and scroll_speed <= 12:
                 scroll_speed += .5
-                if pipe_frequency >= 1150:
+                if pipe_frequency >= 1200:
                     pipe_frequency -= 50
             game_sound['point'].play()
             pass_pipe = False
