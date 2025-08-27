@@ -1,6 +1,7 @@
 import pygame
 from pygame import*
 import random
+import time
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -13,16 +14,16 @@ pygame.display.set_caption("Flappy Bird by Deep")
 
 #define font
 
-font = pygame.font.SysFont('bauhaus 93', 70,)
+font = pygame.font.SysFont('Calibri', 70, bold=True)
 color = 'white'
 
 #Globle game variables
 ground_scroll = 0
 scroll_speed = 4
-flaying = False
+flying = False
 game_over = False
-pipe_gap = 160
-pipe_frequency = 1500 #milliseconds
+pipe_gap = 150
+pipe_frequency = 1450 #milliseconds
 last_pipe = pygame.time.get_ticks() - pipe_frequency
 score = 0
 pass_pipe = False
@@ -41,24 +42,32 @@ game_sound = {}
 game_sound['point'] = pygame.mixer.Sound('sound\point.mp3')
 game_sound['hit'] = pygame.mixer.Sound('sound\hit.mp3')
 game_sound['flap'] = pygame.mixer.Sound('sound/flap.mp3')
+game_sound['die'] = pygame.mixer.Sound('sound\die.mp3')
+game_sound['swoosh'] = pygame.mixer.Sound('sound\swoosh.mp3')
+
 
 #Globle Functions:
 
 def restart():
     global bird_hit
+    global pipe_frequency
+    global scroll_speed
     bird_hit = False
     pipe_group.empty()
-   # flappy.rect.x = 150
-   # flappy.rect.y = int(screen_height/2.3)
+    flappy.rect.x = 150
+    flappy.rect.y = int(screen_height/2.3)
     score = 0
-    flappy.rect.center = (150,int(screen_height/2.3))
+   #flappy.rect.center = (150,int(screen_height/2.3))
     flappy.vel = 0
+    pipe_frequency = 1450 #milliseconds
+    scroll_speed = 4
+
 
     return score
-    
+     
 
 def text_draw(text, font, color, x, y):
-    img = font.render(text,True,color)
+    img = font.render(text,True,color,)
     screen.blit(img, (x,y))
 
 class Bird(pygame.sprite.Sprite):
@@ -78,7 +87,7 @@ class Bird(pygame.sprite.Sprite):
 
 
     def update(self):
-        if flaying == True:
+        if flying == True:
             #Gravity
             self.vel += 0.5
             if self.vel > 7:
@@ -106,6 +115,8 @@ class Bird(pygame.sprite.Sprite):
     def jump(self):         #jump function
         if game_over == False:
             self.vel = -6
+            if scroll_speed >= 6 and self.vel<= -7:
+                self.vel += -0.5
             game_sound['flap'].play()
             
 
@@ -145,6 +156,8 @@ class Button():
         if self.rect.collidepoint(pos):
             if pygame.mouse.get_pressed()[0] == 1:
                 restart = True
+                #global flying 
+                #flying = False
         
         screen.blit(self.image, (self.rect.x, self.rect.y))
 
@@ -181,8 +194,13 @@ while run:
             and bird_group.sprites()[0].rect.left < pipe_group.sprites()[0].rect.right\
             and pass_pipe == False:
             pass_pipe = True
+            game_sound['swoosh'].play()
         if pass_pipe == True and bird_group.sprites()[0].rect.left > pipe_group.sprites()[0].rect.right:
             score += 1
+            if score % 4 == 0 and scroll_speed <= 12:
+                scroll_speed += .5
+                if pipe_frequency >= 1150:
+                    pipe_frequency -= 50
             game_sound['point'].play()
             pass_pipe = False
     text_draw(str(score),font,color,int(screen_width/2 - 20),40)
@@ -195,6 +213,7 @@ while run:
             if not bird_hit:
                 game_sound['hit'].play()
                 bird_hit = True
+            game_sound['die'].play()
 
 
 
@@ -202,7 +221,7 @@ while run:
     if flappy.rect.bottom >= 568:
         if not game_over:
             game_over= True
-            flaying= False
+            flying= False
             if not bird_hit:
                 game_sound['hit'].play()
 
@@ -210,7 +229,7 @@ while run:
 
         #Pipe Generate logic
         time_now = pygame.time.get_ticks()
-        if time_now - last_pipe > pipe_frequency and flaying == True:
+        if time_now - last_pipe > pipe_frequency and flying == True:
             pipe_height = random.randint(-170,100)
             btm_pipe = Pipe(screen_width, int(screen_height/2) + pipe_height, 1)
             top_pipe = Pipe(screen_width, int(screen_height/2) + pipe_height, -1)
@@ -229,10 +248,11 @@ while run:
     if game_over==True:
         if button.draw() == True:
             game_over = False
+            flying = False
             score = restart()
 
     #Title part
-    if game_over == True or flaying == False:
+    if game_over == True or flying == False:
         screen.blit(resized_title, ((screen_width/2 - 245),(screen_height/2 -250)))
     
     
@@ -241,8 +261,8 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
-        if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP) and flaying == False:
-            flaying = True
+        if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP) and flying == False:
+            flying = True
 
         if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
            flappy.jump()
