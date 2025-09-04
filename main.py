@@ -14,7 +14,8 @@ pygame.display.set_caption("Flappy Bird by Deep")
 
 #define font
 
-font = pygame.font.SysFont('Calibri', 70, bold=True)
+font = pygame.font.Font('font\PressStart2P-Regular.ttf', 50)
+small_font = pygame.font.Font('font\PressStart2P-Regular.ttf', 20)
 color = 'white'
 
 #Globle game variables
@@ -26,6 +27,7 @@ pipe_gap = 150
 pipe_frequency = 1450 #milliseconds
 last_pipe = pygame.time.get_ticks() - pipe_frequency
 score = 0
+high_score = 0
 pass_pipe = False
 bird_hit = False
 
@@ -181,9 +183,9 @@ while run:
 
 
     #bird
-    bird_group.draw(screen)
     bird_group.update()
     pipe_group.draw(screen)    #pipe
+    bird_group.draw(screen)
     
     screen.blit(ground_img, (ground_scroll,568))
 
@@ -203,8 +205,13 @@ while run:
                     pipe_frequency -= 50
             game_sound['point'].play()
             pass_pipe = False
-    text_draw(str(score),font,color,int(screen_width/2 - 20),40)
+            if score > high_score:
+                high_score = score
 
+    text_draw(str(score),font,color,int(screen_width/2 - 20),40)
+    text_draw(f"High: {high_score}", small_font, color, 20, 20)
+
+    
 
     #bird & pipe collision
     if pygame.sprite.groupcollide(bird_group,pipe_group, False, False) or flappy.rect.top < 0:
